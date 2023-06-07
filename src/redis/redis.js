@@ -1,8 +1,8 @@
 const redis = require('redis');
 const {promisify} = require('util');
-// require('dotenv').config();
 
-//interacting with redis redis server
+
+//interacting with redis server
 
 const redisClient = redis.createClient({
     host:'redis-16989.c301.ap-south-1-1.ec2.cloud.redislabs.com',

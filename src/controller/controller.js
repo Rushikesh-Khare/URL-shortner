@@ -15,6 +15,9 @@ const createShortUrl = async function (req, res) {
         if (!longUrl || longUrl == "") {
             res.status(400).send({ status: false, msg: "Long Url is required and Long Url cannot be empty" })
         }
+        if (Object.keys(data).length !== 1) {
+            return res.status(400).send({ status: false, message: "Enter only long URL" })
+        }
         if (typeof longUrl != "string") {
             res.status(400).send({ status: false, msg: "Long Url's type should be string only" })
         }
@@ -52,6 +55,7 @@ const createShortUrl = async function (req, res) {
         //====here we are creating tha data=====
         const createUrlData = await urlModel.create(data);
         await SET_ASYNC(longUrl, JSON.stringify({ urlCode, shortUrl }), 'EX', 24 * 60 * 60);
+        await SET_ASYNC(createUrlData.urlCode, JSON.stringify({ longUrl: createUrlData.longUrl }), 'EX', 24 * 60 * 60);
         const finalResult = await urlModel.findById(createUrlData._id).select({ longUrl: 1, shortUrl: 1, urlCode: 1, _id: 0 });
         res.status(201).send({ status: true, data: finalResult });
     } catch (error) {
@@ -66,7 +70,7 @@ const getURL = async function (req, res) {
 
         if (cachedUrl) {
             const { longUrl } = JSON.parse(cachedUrl);
-            return res.redirect(longUrl);
+            return res.status(302).redirect(longUrl);
         }
 
 
@@ -74,10 +78,10 @@ const getURL = async function (req, res) {
 
         if (!getData) {
             return res.status(400).send({ status: false, msg: "invalid urlcode" });
-
+            
         }
         await SET_ASYNC(getData.urlCode, JSON.stringify({ longUrl: getData.longUrl }), 'EX', 24 * 60 * 60);
-        res.status(303).redirect(getData.longUrl);
+        res.status(302).redirect(getData.longUrl);
     } catch (error) {
         res.status(500).send({ status: false, msg: error.message });
     }
